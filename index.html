@@ -22,10 +22,10 @@
 <body>
   <div class="card">
     <h2>🔔 OneSignal Web Push Receiver (JTestWeb)</h2>
-    <p class="muted">Click the button to enable notifications and get your Player ID.</p>
+    <p class="muted">Click to enable notifications and get your Subscription (Player) ID.</p>
     <button id="enable">Enable Notifications</button>
 
-    <p style="margin-top:16px;">Player ID:</p>
+    <p style="margin-top:16px;">Subscription ID:</p>
     <code id="playerId">—</code>
 
     <div id="log" class="log" aria-live="polite"></div>
@@ -34,7 +34,7 @@
   <script>
     const APP_ID = "4bd637c1-11d5-46bf-b1c3-c203b648b25e"; // your App ID
     const REPO = "JTestWeb";              // your repo name
-    const SAFARI_WEB_ID = undefined;      // e.g. "web.onesignal.auto.xxxxx" (set if testing Safari)
+    const SAFARI_WEB_ID = undefined;      // set if testing Safari
 
     const $ = (id) => document.getElementById(id);
     const log = (m) => { $("log").textContent += `${new Date().toLocaleTimeString()} — ${m}\n`; };
@@ -54,17 +54,30 @@
         });
 
         log("SDK initialized.");
+
+        // Listen for subscription changes and show the new ID as soon as it’s assigned
+        OneSignal.User.PushSubscription.addEventListener("change", (event) => {
+          const id = event?.current?.id || "";
+          $("playerId").textContent = id || "—";
+          log("PushSubscription change:\n" + JSON.stringify(event, null, 2));
+        });
+
         await refreshStatus(OneSignal);
 
         $("enable").addEventListener("click", async () => {
           try {
-            log("Requesting permission…");
+            // Request native permission
+            const previous = OneSignal.Notifications.permission;
+            log(`Permission before: ${previous}`);
             await OneSignal.Notifications.requestPermission();
-            log("Subscribing…");
-            await OneSignal.Notifications.subscribe();
+
+            // Opt the current subscription in (shows prompt if needed)
+            log("Opting in…");
+            await OneSignal.User.PushSubscription.optIn();
+
             await refreshStatus(OneSignal);
           } catch (e) {
-            log("Error during permission/subscribe: " + (e.message || e));
+            log("Error during permission/opt-in: " + (e.message || e));
           }
         });
       } catch (e) {
@@ -73,12 +86,13 @@
     });
 
     async function refreshStatus(OneSignal) {
-      const permission = await OneSignal.Notifications.permission;
-      const isSubscribed = await OneSignal.Notifications.isSubscribed();
-      let playerId = "";
-      try { playerId = await OneSignal.User.pushSubscription.id; } catch(_) {}
-      $("playerId").textContent = playerId || "—";
-      log(JSON.stringify({ permission, isSubscribed, playerId }, null, 2));
+      // v16: permission is a boolean; subscription status is `optedIn`
+      const permission = OneSignal.Notifications.permission; // true/false
+      const optedIn = OneSignal.User.PushSubscription.optedIn; // true/false
+      let id = "";
+      try { id = OneSignal.User.PushSubscription.id || ""; } catch (_) {}
+      $("playerId").textContent = id || "—";
+      log(JSON.stringify({ permission, optedIn, id }, null, 2));
     }
   </script>
 </body>
