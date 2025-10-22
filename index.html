@@ -9,33 +9,32 @@
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
-    // --- Replace this with your App ID ---
-    const ONESIGNAL_APP_ID = "YOUR-ONESIGNAL-APP-ID";
-
-    // --- OneSignal Setup ---
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
       console.log("Initializing OneSignal...");
 
       await OneSignal.init({
-        appId: ONESIGNAL_APP_ID,
-        allowLocalhostAsSecureOrigin: true, // lets you test locally
+        appId: "3edcbf40-9189-49bb-baa8-55325c784194", // ✅ your actual app ID
+        allowLocalhostAsSecureOrigin: true, // allows local testing
       });
 
-      const permission = await OneSignal.Notifications.permission;
-      console.log("Notification permission:", permission);
+      console.log("OneSignal initialized.");
 
-      // Subscribe automatically if not already
+      // Ask for notification permission
+      const permission = await OneSignal.Notifications.permission;
+      console.log("Permission:", permission);
+
       if (permission !== "granted") {
         await OneSignal.Notifications.requestPermission();
       }
 
+      // Subscribe user
       const isSubscribed = await OneSignal.Notifications.isSubscribed();
       if (!isSubscribed) {
         await OneSignal.Notifications.subscribe();
       }
 
-      // Get the Player ID (the ID you’ll use in Postman)
+      // Show the Player ID
       const playerId = await OneSignal.User.pushSubscription.id;
       console.log("Player ID:", playerId);
       document.getElementById("player-id").textContent = playerId || "Not subscribed yet";
