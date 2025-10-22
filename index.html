@@ -14,27 +14,24 @@
       console.log("Initializing OneSignal...");
 
       await OneSignal.init({
-        appId: "3edcbf40-9189-49bb-baa8-55325c784194", // ✅ your actual app ID
-        allowLocalhostAsSecureOrigin: true, // allows local testing
+        appId: "4bd637c1-11d5-46bf-b1c3-c203b648b25e", // ✅ your App ID
+        allowLocalhostAsSecureOrigin: true
       });
 
       console.log("OneSignal initialized.");
 
-      // Ask for notification permission
       const permission = await OneSignal.Notifications.permission;
-      console.log("Permission:", permission);
+      console.log("Notification permission:", permission);
 
       if (permission !== "granted") {
         await OneSignal.Notifications.requestPermission();
       }
 
-      // Subscribe user
       const isSubscribed = await OneSignal.Notifications.isSubscribed();
       if (!isSubscribed) {
         await OneSignal.Notifications.subscribe();
       }
 
-      // Show the Player ID
       const playerId = await OneSignal.User.pushSubscription.id;
       console.log("Player ID:", playerId);
       document.getElementById("player-id").textContent = playerId || "Not subscribed yet";
