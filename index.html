@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OneSignal Direct Sender (No Backend)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0b1020; color: #e5e7eb; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .card { background: #111827; padding: 24px; border-radius: 16px; width: 100%; max-width: 600px; box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+    input, textarea, button { width: 100%; margin: 8px 0; padding: 10px; border-radius: 8px; border: 1px solid #374151; background: #0f172a; color: #e5e7eb; }
+    button { background: #3b82f6; border: none; cursor: pointer; font-weight: 600; }
+    button:hover { background: #2563eb; }
+    .log { background: #0f172a; border: 1px solid #1f2937; padding: 12px; border-radius: 8px; min-height: 80px; white-space: pre-wrap; font-family: monospace; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Send Notification via OneSignal</h2>
+    <input id="appId" placeholder="OneSignal App ID" />
+    <input id="apiKey" placeholder="REST API Key (⚠️ for test use only)" />
+    <input id="playerIds" placeholder="Player IDs (comma-separated)" />
+    <input id="title" placeholder="Title" />
+    <textarea id="message" rows="3" placeholder="Message body"></textarea>
+    <input id="url" placeholder="URL to open (optional)" />
+    <button id="sendBtn">Send</button>
+    <div id="log" class="log"></div>
+  </div>
+
+  <script>
+    const log = (msg) => document.getElementById('log').textContent += msg + '\\n';
+
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      const appId = document.getElementById('appId').value;
+      const apiKey = document.getElementById('apiKey').value;
+      const playerIds = document.getElementById('playerIds').value.split(',').map(i => i.trim()).filter(Boolean);
+      const title = document.getElementById('title').value;
+      const message = document.getElementById('message').value;
+      const url = document.getElementById('url').value || undefined;
+
+      if (!appId || !apiKey || !playerIds.length || !title || !message) {
+        log('❌ Missing required fields.');
+        return;
+      }
+
+      try {
+        const res = await fetch('https://onesignal.com/api/v1/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': 'Basic ' + apiKey
+          },
+          body: JSON.stringify({
+            app_id: appId,
+            include_player_ids: playerIds,
+            headings: { en: title },
+            contents: { en: message },
+            url
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.errors || data.error || 'Request failed');
+        log('✅ Success: ' + JSON.stringify(data, null, 2));
+      } catch (err) {
+        log('❌ Error: ' + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
